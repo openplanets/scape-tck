@@ -5,6 +5,8 @@ jdk:
   - openjdk6
 before_install:
   - git clone https://github.com/openplanets/scape-platform-datamodel.git
+  - echo "Building scape-platform-datamodel revision:"
+  - git rev-parse HEAD
   - cd scape-platform-datamodel
   - mvn -q install
   - cd ..
