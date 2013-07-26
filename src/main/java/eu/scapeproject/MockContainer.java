@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBException;
 
+import org.apache.commons.io.IOUtils;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 import org.simpleframework.http.core.Container;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import eu.scapeproject.model.IntellectualEntity;
 import eu.scapeproject.model.LifecycleState;
 import eu.scapeproject.model.LifecycleState.State;
+import eu.scapeproject.model.Representation;
 import eu.scapeproject.util.ScapeMarshaller;
 
 public class MockContainer implements Container {
@@ -69,6 +71,7 @@ public class MockContainer implements Container {
         resp.getOutputStream().write(ie.getIdentifier().getValue().getBytes());
         resp.getOutputStream().flush();
         resp.getOutputStream().close();
+        resp.close();
     }
 
     private void handleRetrieveEntity(Request req, Response resp) throws Exception {
@@ -76,9 +79,30 @@ public class MockContainer implements Container {
                 req.getPath().getPath().substring(
                         req.getPath().getPath().lastIndexOf('/') + 1);
         resp.setCode(200);
-        resp.getOutputStream().write(this.storage.getXML(id));
+        IOUtils.copy(this.storage.getXML(id), resp.getOutputStream());
         resp.getOutputStream().flush();
         resp.getOutputStream().close();
+        resp.close();
+    }
+
+    private void handleRetrieveRepresentation(Request req, Response resp) throws Exception{
+        String path = req.getPath().toString();
+        String repId = path.substring(path.lastIndexOf('/') + 1);
+        String entityId = path.substring(1,path.length() - repId.length() - 1);
+        entityId = entityId.substring(entityId.lastIndexOf('/'));
+        IntellectualEntity ie = this.marshaller.deserialize(IntellectualEntity.class, this.storage.getXML(entityId));
+        for (Representation r: ie.getRepresentations()){
+            if (r.getIdentifier().getValue().equals(repId)){
+                System.out.println(entityId + "/" + repId);
+                resp.setCode(200);
+                this.marshaller.serialize(r, resp.getOutputStream());
+                resp.getOutputStream().flush();
+                resp.getOutputStream().close();
+                return;
+            }
+        }
+        resp.setCode(404);
+        resp.close();
     }
 
     private void ingestEntity(IntellectualEntity ie) throws Exception {
@@ -119,7 +143,7 @@ public class MockContainer implements Container {
             } else if (contextPath.startsWith("/metadata/")) {
 //                handleRetrieveMetadata(req, resp);
             } else if (contextPath.startsWith("/representation/")) {
-//                handleRetrieveRepresentation(req, resp);
+                handleRetrieveRepresentation(req, resp);
             } else if (contextPath.startsWith("/entity-version-list/")) {
 //                handleRetrieveVersionList(req, resp);
             } else if (contextPath.startsWith("/sru/entities")) {
@@ -141,7 +165,6 @@ public class MockContainer implements Container {
             resp.close();
         }
     }
-
 
     private void handlePost(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
@@ -191,7 +214,8 @@ public class MockContainer implements Container {
         storage.purge();
     }
 
-    public void start() {
+    public void start() throws Exception{
+        this.purgeStorage();
         this.asyncIngesterThread = new Thread(asyncIngester);
         this.asyncIngesterThread.start();
     }

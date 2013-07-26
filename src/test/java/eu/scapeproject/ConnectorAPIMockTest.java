@@ -1,3 +1,4 @@
+
 package eu.scapeproject;
 
 import static org.junit.Assert.assertEquals;
@@ -26,15 +27,24 @@ import org.slf4j.LoggerFactory;
 
 import eu.scapeproject.model.Identifier;
 import eu.scapeproject.model.IntellectualEntity;
+import eu.scapeproject.model.Representation;
+import eu.scapeproject.model.TestUtil;
 import eu.scapeproject.util.ScapeMarshaller;
 
 public class ConnectorAPIMockTest {
 
     private static final ConnectorAPIMock MOCK = new ConnectorAPIMock(8387);
-    private static final ConnectorAPIUtil UTIL = new ConnectorAPIUtil("http://localhost:8387");
+
+    private static final ConnectorAPIUtil UTIL = new ConnectorAPIUtil(
+            "http://localhost:8387");
+
     private static final HttpClient CLIENT = new DefaultHttpClient();
-    private static final Logger log = LoggerFactory.getLogger(ConnectorAPIMockTest.class);
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+    private static final Logger log = LoggerFactory
+            .getLogger(ConnectorAPIMockTest.class);
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat(
+            "yyyy-MM-dd HH:mm:ss.SSS");
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -52,31 +62,40 @@ public class ConnectorAPIMockTest {
         assertFalse(MOCK.isRunning());
     }
 
-    public ElementContainer createDCElementContainer(){
+    public ElementContainer createDCElementContainer() {
         ElementContainer c = new ElementContainer();
 
         SimpleLiteral title = new SimpleLiteral();
         title.getContent().add("A test entity");
-        c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "title"), SimpleLiteral.class, title));
+        c.getAny().add(
+                new JAXBElement<SimpleLiteral>(new QName(
+                        "http://purl.org/dc/elements/1.1/", "title"),
+                        SimpleLiteral.class, title));
 
         SimpleLiteral date = new SimpleLiteral();
         date.getContent().add(dateFormat.format(new Date()));
-        c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "created"), SimpleLiteral.class, date));
+        c.getAny().add(
+                new JAXBElement<SimpleLiteral>(new QName(
+                        "http://purl.org/dc/elements/1.1/", "created"),
+                        SimpleLiteral.class, date));
 
         SimpleLiteral lang = new SimpleLiteral();
         lang.getContent().add("en");
-        c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "created"), SimpleLiteral.class, lang));
+        c.getAny().add(
+                new JAXBElement<SimpleLiteral>(new QName(
+                        "http://purl.org/dc/elements/1.1/", "created"),
+                        SimpleLiteral.class, lang));
 
         return c;
     }
 
-
     @Test
-    public void testIngestAndRetrieveMinimalIntellectualEntity() throws Exception {
-        IntellectualEntity ie = new IntellectualEntity.Builder()
-                .identifier(new Identifier(UUID.randomUUID().toString()))
-                .descriptive(createDCElementContainer())
-                .build();
+    public void testIngestAndRetrieveMinimalIntellectualEntity()
+            throws Exception {
+        IntellectualEntity ie =
+                new IntellectualEntity.Builder().identifier(
+                        new Identifier(UUID.randomUUID().toString()))
+                        .descriptive(createDCElementContainer()).build();
         HttpPost post = UTIL.createPostEntity(ie);
         HttpResponse resp = CLIENT.execute(post);
         post.releaseConnection();
@@ -85,10 +104,57 @@ public class ConnectorAPIMockTest {
         HttpGet get = UTIL.createGetEntity(ie.getIdentifier().getValue());
         resp = CLIENT.execute(get);
         assertTrue(resp.getStatusLine().getStatusCode() == 200);
-        IntellectualEntity fetched = ScapeMarshaller.newInstance().deserialize(IntellectualEntity.class, resp.getEntity().getContent());
+        IntellectualEntity fetched =
+                ScapeMarshaller.newInstance()
+                        .deserialize(IntellectualEntity.class,
+                                resp.getEntity().getContent());
         get.releaseConnection();
-        assertEquals(ie.getIdentifier().getValue(), fetched.getIdentifier().getValue());
-        assertEquals(ie.getDescriptive().getClass(), fetched.getDescriptive().getClass());
+        assertEquals(ie.getIdentifier().getValue(), fetched.getIdentifier()
+                .getValue());
+        assertEquals(ie.getDescriptive().getClass(), fetched.getDescriptive()
+                .getClass());
     }
 
+    @Test
+    public void testIngestAndRetrieveIntellectualEntity() throws Exception {
+        IntellectualEntity ie = TestUtil.createTestEntity("entity-1");
+        HttpPost post = UTIL.createPostEntity(ie);
+        HttpResponse resp = CLIENT.execute(post);
+        post.releaseConnection();
+        assertTrue(resp.getStatusLine().getStatusCode() == 201);
+
+        HttpGet get = UTIL.createGetEntity(ie.getIdentifier().getValue());
+        resp = CLIENT.execute(get);
+        assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        IntellectualEntity fetched =
+                ScapeMarshaller.newInstance()
+                        .deserialize(IntellectualEntity.class,
+                                resp.getEntity().getContent());
+        get.releaseConnection();
+        assertEquals(ie.getIdentifier().getValue(), fetched.getIdentifier()
+                .getValue());
+        assertEquals(ie.getDescriptive().getClass(), fetched.getDescriptive()
+                .getClass());
+    }
+
+    @Test
+    public void testIngestAndRetrieveRepresentation() throws Exception {
+        IntellectualEntity ie = TestUtil.createTestEntity("entity-2");
+        HttpPost post = UTIL.createPostEntity(ie);
+        HttpResponse resp = CLIENT.execute(post);
+        post.releaseConnection();
+        assertTrue(resp.getStatusLine().getStatusCode() == 201);
+
+        HttpGet get =
+                UTIL.createGetRepresentation(ie.getIdentifier().getValue(), ie
+                        .getRepresentations().get(0).getIdentifier().getValue());
+        resp = CLIENT.execute(get);
+        assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        Representation fetched =
+                (Representation) ScapeMarshaller.newInstance().deserialize(
+                        resp.getEntity().getContent());
+        get.releaseConnection();
+        assertEquals(ie.getRepresentations().get(0).getIdentifier().getValue(),
+                fetched.getIdentifier().getValue());
+    }
 }

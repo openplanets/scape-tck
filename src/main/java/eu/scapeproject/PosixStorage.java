@@ -14,8 +14,13 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PosixStorage {
+
+    private static final Logger LOG =
+            LoggerFactory.getLogger(PosixStorage.class);
 
     private final File xmlDirectory;
     private final File datastreamDirectory;
@@ -98,11 +103,11 @@ public class PosixStorage {
         return versionList;
     }
 
-    public byte[] getXML(String id) throws Exception {
-        return getXML(id,null);
+    public InputStream getXML(String id) throws Exception {
+        return this.getXML(id,null);
     }
 
-    public byte[] getXML(String id, Integer version) throws Exception {
+    public InputStream getXML(String id, Integer version) throws Exception {
         if (version == null){
             version=getLatestVersionNumber(id);
         }
@@ -114,14 +119,28 @@ public class PosixStorage {
         if (!f.exists() || !f.canRead()) {
             throw new FileNotFoundException("Unable to open file " + f.getAbsolutePath());
         }
-        return IOUtils.toByteArray(new FileInputStream(f));
+        return new FileInputStream(f);
     }
 
     public void purge() throws Exception {
     	// to avoid delete problems on windows use gc first.
     	System.gc();
-        FileUtils.deleteDirectory(xmlDirectory);
-        FileUtils.deleteDirectory(datastreamDirectory);
+    	for (String name : xmlDirectory.list()){
+    	    File f = new File(xmlDirectory, name);
+    	    if (f.isDirectory()){
+    	        FileUtils.deleteDirectory(f);
+    	    }else{
+    	        f.delete();
+    	    }
+    	}
+        for (String name : datastreamDirectory.list()){
+            File f = new File(datastreamDirectory, name);
+            if (f.isDirectory()){
+                FileUtils.deleteDirectory(f);
+            }else{
+                f.delete();
+            }
+        }
     }
 
     public void saveXML(byte[] blob, String name, int version, boolean overwrite) throws Exception {
@@ -133,6 +152,7 @@ public class PosixStorage {
             entityDir.mkdir();
         }
         File f = new File(entityDir, "version-" + version + ".xml");
+        LOG.debug("writing entity to " + f.getAbsolutePath());
         if (f.exists() && !overwrite) {
             throw new IOException("File " + f.getAbsolutePath() + " exists already!");
         }
@@ -140,27 +160,6 @@ public class PosixStorage {
         try {
             out = new FileOutputStream(f);
             IOUtils.write(blob, out);
-        } finally {
-            IOUtils.closeQuietly(out);
-        }
-    }
-
-    public void saveXML(InputStream src, String name, int version, boolean overwrite) throws Exception {
-        File entityDir = new File(xmlDirectory, name);
-        if (entityDir.exists() && (entityDir.isFile() || !entityDir.canWrite())) {
-            throw new IOException("Unable to write to " + entityDir.getAbsolutePath());
-        }
-        if (!entityDir.exists()) {
-            entityDir.mkdir();
-        }
-        File f = new File(entityDir, "version-" + version + ".xml");
-        if (f.exists() && !overwrite) {
-            throw new IOException("File " + f.getAbsolutePath() + " exists already!");
-        }
-        OutputStream out = null;
-        try {
-            out = new FileOutputStream(f);
-            IOUtils.copy(src, out);
         } finally {
             IOUtils.closeQuietly(out);
         }

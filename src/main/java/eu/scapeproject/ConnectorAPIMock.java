@@ -10,12 +10,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Mock class for API testing
- * 
+ *
  * @author Frank Asseg
- * 
+ *
  */
 public class ConnectorAPIMock implements Runnable {
-	
+
 	private static final Logger LOG = LoggerFactory.getLogger(ConnectorAPIMock.class);
 	private final int port;
 	private final String path;
@@ -41,7 +41,8 @@ public class ConnectorAPIMock implements Runnable {
 		return this.running;
 	}
 
-	public void run() {
+	@Override
+    public void run() {
 		try {
 			this.startServer();
 			this.running = true;
@@ -65,7 +66,7 @@ public class ConnectorAPIMock implements Runnable {
 		}
 		this.conn.close();
 		this.running = false;
-		LOG.debug(">> total used:\t" + fmt.format((double) Runtime.getRuntime().totalMemory() / (1024d * 1024d)) + " MB ");
+		LOG.debug(">> total used:\t" + fmt.format(Runtime.getRuntime().totalMemory() / (1024d * 1024d)) + " MB ");
 		LOG.debug(">> after start:\t" + fmt.format(startupMem / (1024d * 1024d)) + " MB");
 		LOG.debug(">> growth:\t\t" + fmt.format((Runtime.getRuntime().totalMemory() - startupMem)/(1024d*1024d)) + " MB");
 	}

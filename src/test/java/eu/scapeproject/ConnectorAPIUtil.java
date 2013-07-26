@@ -68,8 +68,8 @@ public class ConnectorAPIUtil {
         return new HttpGet(mockUrl + METADATA_PATH + "/" + id);
     }
 
-    public HttpGet createGetRepresentation(String id) {
-        return new HttpGet(mockUrl + REPRESENTATION_PATH + "/" + id);
+    public HttpGet createGetRepresentation(String entityId, String repId) {
+        return new HttpGet(mockUrl + REPRESENTATION_PATH + "/" + entityId + "/" + repId);
     }
 
     public HttpGet createGetSRUEntity(String term) {
