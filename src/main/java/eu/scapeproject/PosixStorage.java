@@ -5,13 +5,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -20,7 +20,7 @@ public class PosixStorage {
     private final File xmlDirectory;
     private final File datastreamDirectory;
     private final Pattern versionPattern = Pattern.compile("version\\-\\d*\\.xml");
-    
+
 
     public PosixStorage(String directory) {
         File parent = new File(directory);
@@ -118,7 +118,7 @@ public class PosixStorage {
     }
 
     public void purge() throws Exception {
-    	// to avoid delete problems on windows use gc first. 
+    	// to avoid delete problems on windows use gc first.
     	System.gc();
         FileUtils.deleteDirectory(xmlDirectory);
         FileUtils.deleteDirectory(datastreamDirectory);
@@ -140,6 +140,27 @@ public class PosixStorage {
         try {
             out = new FileOutputStream(f);
             IOUtils.write(blob, out);
+        } finally {
+            IOUtils.closeQuietly(out);
+        }
+    }
+
+    public void saveXML(InputStream src, String name, int version, boolean overwrite) throws Exception {
+        File entityDir = new File(xmlDirectory, name);
+        if (entityDir.exists() && (entityDir.isFile() || !entityDir.canWrite())) {
+            throw new IOException("Unable to write to " + entityDir.getAbsolutePath());
+        }
+        if (!entityDir.exists()) {
+            entityDir.mkdir();
+        }
+        File f = new File(entityDir, "version-" + version + ".xml");
+        if (f.exists() && !overwrite) {
+            throw new IOException("File " + f.getAbsolutePath() + " exists already!");
+        }
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream(f);
+            IOUtils.copy(src, out);
         } finally {
             IOUtils.closeQuietly(out);
         }

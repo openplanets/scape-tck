@@ -1,5 +1,6 @@
 package eu.scapeproject;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import eu.scapeproject.model.Identifier;
 import eu.scapeproject.model.IntellectualEntity;
+import eu.scapeproject.util.ScapeMarshaller;
 
 public class ConnectorAPIMockTest {
 
@@ -70,7 +72,7 @@ public class ConnectorAPIMockTest {
 
 
     @Test
-    public void testIngestMinimalIntellectualEntity() throws Exception {
+    public void testIngestAndRetrieveMinimalIntellectualEntity() throws Exception {
         IntellectualEntity ie = new IntellectualEntity.Builder()
                 .identifier(new Identifier(UUID.randomUUID().toString()))
                 .descriptive(createDCElementContainer())
@@ -83,7 +85,10 @@ public class ConnectorAPIMockTest {
         HttpGet get = UTIL.createGetEntity(ie.getIdentifier().getValue());
         resp = CLIENT.execute(get);
         assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        IntellectualEntity fetched = ScapeMarshaller.newInstance().deserialize(IntellectualEntity.class, resp.getEntity().getContent());
         get.releaseConnection();
+        assertEquals(ie.getIdentifier().getValue(), fetched.getIdentifier().getValue());
+        assertEquals(ie.getDescriptive().getClass(), fetched.getDescriptive().getClass());
     }
 
 }

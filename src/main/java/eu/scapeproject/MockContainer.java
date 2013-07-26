@@ -1,6 +1,7 @@
 
 package eu.scapeproject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,6 +16,9 @@ import org.simpleframework.http.core.Container;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.scapeproject.model.IntellectualEntity;
+import eu.scapeproject.model.LifecycleState;
+import eu.scapeproject.model.LifecycleState.State;
 import eu.scapeproject.util.ScapeMarshaller;
 
 public class MockContainer implements Container {
@@ -58,6 +62,34 @@ public class MockContainer implements Container {
     }
 
 
+    private void handleIngest(Request req, Response resp) throws Exception{
+        IntellectualEntity ie = this.marshaller.deserialize(IntellectualEntity.class, req.getInputStream());
+        this.ingestEntity(ie);
+        resp.setCode(201);
+        resp.getOutputStream().write(ie.getIdentifier().getValue().getBytes());
+        resp.getOutputStream().flush();
+        resp.getOutputStream().close();
+    }
+
+    private void handleRetrieveEntity(Request req, Response resp) throws Exception {
+        String id =
+                req.getPath().getPath().substring(
+                        req.getPath().getPath().lastIndexOf('/') + 1);
+        resp.setCode(200);
+        resp.getOutputStream().write(this.storage.getXML(id));
+        resp.getOutputStream().flush();
+        resp.getOutputStream().close();
+    }
+
+    private void ingestEntity(IntellectualEntity ie) throws Exception {
+        ie = new IntellectualEntity.Builder(ie)
+            .lifecycleState(new LifecycleState("ingested at " + (new Date().getTime()),State.INGESTED))
+            .build();
+        ByteArrayOutputStream sink = new ByteArrayOutputStream();
+        this.marshaller.serialize(ie, sink);
+        this.storage.saveXML(sink.toByteArray(), ie.getIdentifier().getValue(), ie.getVersionNumber(), false);
+    }
+
     @Override
     public void handle(Request req, Response resp) {
         try {
@@ -83,7 +115,7 @@ public class MockContainer implements Container {
                 req.getClientAddress().getAddress().getHostAddress());
         try {
             if (contextPath.startsWith("/entity/")) {
-//                handleRetrieveEntity(req, resp);
+                handleRetrieveEntity(req, resp);
             } else if (contextPath.startsWith("/metadata/")) {
 //                handleRetrieveMetadata(req, resp);
             } else if (contextPath.startsWith("/representation/")) {
@@ -110,6 +142,7 @@ public class MockContainer implements Container {
         }
     }
 
+
     private void handlePost(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
         LOG.info("-- HTTP/1.1 POST " + contextPath + " from " +
@@ -118,7 +151,7 @@ public class MockContainer implements Container {
             if (contextPath.startsWith("/entity-async")) {
 //                handleAsyncIngest(req, resp, 200);
             } else if (contextPath.equals("/entity")) {
-//                handleIngest(req, resp, 201);
+                handleIngest(req, resp);
             } else if (contextPath.startsWith("/entity-list")) {
 //                handleRetrieveEntityList(req, resp);
             } else {
@@ -130,6 +163,7 @@ public class MockContainer implements Container {
             resp.close();
         }
     }
+
 
     private void handlePut(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
