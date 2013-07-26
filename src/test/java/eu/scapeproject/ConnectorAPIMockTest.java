@@ -5,10 +5,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.awt.image.BufferedImage;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.imageio.ImageIO;
 import javax.xml.bind.JAXBElement;
 import javax.xml.namespace.QName;
 
@@ -156,5 +158,29 @@ public class ConnectorAPIMockTest {
         get.releaseConnection();
         assertEquals(ie.getRepresentations().get(0).getIdentifier().getValue(),
                 fetched.getIdentifier().getValue());
+    }
+
+    @Test
+    public void testIngestAndRetrieveFile() throws Exception {
+        IntellectualEntity ie = TestUtil.createTestEntity("entity-3");
+        HttpPost post = UTIL.createPostEntity(ie);
+        HttpResponse resp = CLIENT.execute(post);
+        post.releaseConnection();
+        assertTrue(resp.getStatusLine().getStatusCode() == 201);
+
+        HttpGet get =
+                UTIL.createGetFile(ie.getIdentifier().getValue(),
+                        ie.getRepresentations().get(0).getIdentifier()
+                                .getValue(), ie.getRepresentations().get(0)
+                                .getFiles().get(0).getIdentifier().getValue());
+        resp = CLIENT.execute(get);
+        assertTrue(resp.getStatusLine().getStatusCode() == 200);
+        assertEquals("image/png", resp.getFirstHeader("Content-Type").getValue());
+
+        // try to decode the file as an image
+        BufferedImage img = ImageIO.read(resp.getEntity().getContent());
+        assertEquals(65,img.getHeight());
+        get.releaseConnection();
+
     }
 }

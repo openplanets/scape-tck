@@ -8,7 +8,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 
-import eu.scapeproject.model.File;
 import eu.scapeproject.model.IntellectualEntity;
 import eu.scapeproject.model.Representation;
 import eu.scapeproject.util.ScapeMarshaller;
@@ -59,9 +58,8 @@ public class ConnectorAPIUtil {
         return new HttpGet(mockUrl + LIFECYCLE_STATE_PATH + "/" + id);
     }
 
-    public HttpGet createGetFile(File next) {
-        return new HttpGet(mockUrl + FILE_PATH + "/" +
-                next.getIdentifier().getValue());
+    public HttpGet createGetFile(String entityId, String repId, String fileId) {
+        return new HttpGet(mockUrl + FILE_PATH + "/" +entityId + "/" + repId + "/" + fileId);
     }
 
     public HttpGet createGetMetadata(String id) throws Exception {

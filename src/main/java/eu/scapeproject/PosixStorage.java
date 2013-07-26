@@ -1,3 +1,4 @@
+
 package eu.scapeproject;
 
 import java.io.File;
@@ -8,7 +9,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,13 +23,21 @@ import org.slf4j.LoggerFactory;
 
 public class PosixStorage {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PosixStorage.class);
+    private static final Logger LOG = LoggerFactory
+            .getLogger(PosixStorage.class);
 
     private final File xmlDirectory;
-    private final File datastreamDirectory;
-    private final Pattern versionPattern = Pattern.compile("version\\-\\d*\\.xml");
 
+    private final File datastreamDirectory;
+
+    private final Pattern versionPattern = Pattern
+            .compile("version\\-\\d*\\.xml");
+
+    private final Map<String, String> datastreams =
+            new HashMap<String, String>();
+
+    private final Map<String, String> contentTypes =
+            new HashMap<String, String>();
 
     public PosixStorage(String directory) {
         File parent = new File(directory);
@@ -33,32 +45,39 @@ public class PosixStorage {
             parent.mkdir();
         }
         if (!parent.canExecute() || !parent.canRead() || !parent.canWrite()) {
-            throw new RuntimeException("Unable to access directory " + parent.getAbsolutePath());
+            throw new RuntimeException("Unable to access directory " +
+                    parent.getAbsolutePath());
         }
 
         xmlDirectory = new File(parent, "foxml");
         if (!xmlDirectory.exists()) {
             xmlDirectory.mkdir();
         }
-        if (!xmlDirectory.canExecute() || !xmlDirectory.canRead() || !xmlDirectory.canWrite()) {
-            throw new RuntimeException("Unable to access directory " + xmlDirectory.getAbsolutePath());
+        if (!xmlDirectory.canExecute() || !xmlDirectory.canRead() ||
+                !xmlDirectory.canWrite()) {
+            throw new RuntimeException("Unable to access directory " +
+                    xmlDirectory.getAbsolutePath());
         }
 
         datastreamDirectory = new File(parent, "datastreams");
         if (!datastreamDirectory.exists()) {
             datastreamDirectory.mkdir();
         }
-        if (!datastreamDirectory.canExecute() || !datastreamDirectory.canRead() || !datastreamDirectory.canWrite()) {
-            throw new RuntimeException("Unable to access directory " + datastreamDirectory.getAbsolutePath());
+        if (!datastreamDirectory.canExecute() ||
+                !datastreamDirectory.canRead() ||
+                !datastreamDirectory.canWrite()) {
+            throw new RuntimeException("Unable to access directory " +
+                    datastreamDirectory.getAbsolutePath());
         }
     }
 
-    public boolean exists(String id, Integer versionNumber) throws IOException{
-        if (versionNumber == null){
-            versionNumber=getLatestVersionNumber(id);
+    public boolean exists(String id, Integer versionNumber) throws IOException {
+        if (versionNumber == null) {
+            versionNumber = getLatestVersionNumber(id);
         }
         try {
-            return new File(getEntityDir(id), "version-" + versionNumber + ".xml").exists();
+            return new File(getEntityDir(id), "version-" + versionNumber +
+                    ".xml").exists();
         } catch (IOException e) {
             return false;
         }
@@ -81,7 +100,9 @@ public class PosixStorage {
         for (String name : dir.list()) {
             Matcher m = versionPattern.matcher(name);
             if (m.find()) {
-                version = Math.max(version, Integer.parseInt(name.substring(m.start() + 8, m.end() - 4)));
+                version =
+                        Math.max(version, Integer.parseInt(name.substring(m
+                                .start() + 8, m.end() - 4)));
             }
         }
         return version;
@@ -104,49 +125,55 @@ public class PosixStorage {
     }
 
     public InputStream getXML(String id) throws Exception {
-        return this.getXML(id,null);
+        return this.getXML(id, null);
     }
 
     public InputStream getXML(String id, Integer version) throws Exception {
-        if (version == null){
-            version=getLatestVersionNumber(id);
+        if (version == null) {
+            version = getLatestVersionNumber(id);
         }
         final File entityDir = new File(xmlDirectory, id);
-        if (!entityDir.exists() || !entityDir.canRead() || !entityDir.isDirectory()) {
-            throw new FileNotFoundException("Unable to open dir " + entityDir.getAbsolutePath());
+        if (!entityDir.exists() || !entityDir.canRead() ||
+                !entityDir.isDirectory()) {
+            throw new FileNotFoundException("Unable to open dir " +
+                    entityDir.getAbsolutePath());
         }
         final File f = new File(entityDir, "version-" + version + ".xml");
         if (!f.exists() || !f.canRead()) {
-            throw new FileNotFoundException("Unable to open file " + f.getAbsolutePath());
+            throw new FileNotFoundException("Unable to open file " +
+                    f.getAbsolutePath());
         }
         return new FileInputStream(f);
     }
 
     public void purge() throws Exception {
-    	// to avoid delete problems on windows use gc first.
-    	System.gc();
-    	for (String name : xmlDirectory.list()){
-    	    File f = new File(xmlDirectory, name);
-    	    if (f.isDirectory()){
-    	        FileUtils.deleteDirectory(f);
-    	    }else{
-    	        f.delete();
-    	    }
-    	}
-        for (String name : datastreamDirectory.list()){
-            File f = new File(datastreamDirectory, name);
-            if (f.isDirectory()){
+        // to avoid delete problems on windows use gc first.
+        System.gc();
+        for (String name : xmlDirectory.list()) {
+            File f = new File(xmlDirectory, name);
+            if (f.isDirectory()) {
                 FileUtils.deleteDirectory(f);
-            }else{
+            } else {
+                f.delete();
+            }
+        }
+        for (String name : datastreamDirectory.list()) {
+            File f = new File(datastreamDirectory, name);
+            if (f.isDirectory()) {
+                FileUtils.deleteDirectory(f);
+            } else {
                 f.delete();
             }
         }
     }
 
-    public void saveXML(byte[] blob, String name, int version, boolean overwrite) throws Exception {
+    public void
+            saveXML(byte[] blob, String name, int version, boolean overwrite)
+                    throws Exception {
         File entityDir = new File(xmlDirectory, name);
         if (entityDir.exists() && (entityDir.isFile() || !entityDir.canWrite())) {
-            throw new IOException("Unable to write to " + entityDir.getAbsolutePath());
+            throw new IOException("Unable to write to " +
+                    entityDir.getAbsolutePath());
         }
         if (!entityDir.exists()) {
             entityDir.mkdir();
@@ -154,7 +181,8 @@ public class PosixStorage {
         File f = new File(entityDir, "version-" + version + ".xml");
         LOG.debug("writing entity to " + f.getAbsolutePath());
         if (f.exists() && !overwrite) {
-            throw new IOException("File " + f.getAbsolutePath() + " exists already!");
+            throw new IOException("File " + f.getAbsolutePath() +
+                    " exists already!");
         }
         OutputStream out = null;
         try {
@@ -162,6 +190,64 @@ public class PosixStorage {
             IOUtils.write(blob, out);
         } finally {
             IOUtils.closeQuietly(out);
+        }
+    }
+
+    public void saveBinary(InputStream src, String contentType, String fileId,
+            int version, boolean overwrite) throws Exception {
+        String filename = UUID.randomUUID().toString();
+        this.datastreams.put("/" + fileId, filename);
+        this.contentTypes.put("/" + fileId, contentType);
+        File dsDir = new File(datastreamDirectory, filename);
+        if (dsDir.exists() && (dsDir.isFile() || !dsDir.canWrite())) {
+            throw new IOException("Unable to write to " +
+                    dsDir.getAbsolutePath());
+        }
+        if (!dsDir.exists()) {
+            dsDir.mkdir();
+        }
+        File f = new File(dsDir, "version-" + version + ".data");
+        LOG.debug("writing binary data to " + f.getAbsolutePath());
+        if (f.exists() && !overwrite) {
+            throw new IOException("File " + f.getAbsolutePath() +
+                    " exists already!");
+        }
+        OutputStream out = null;
+        try {
+            out = new FileOutputStream(f);
+            IOUtils.copy(src, out);
+        } finally {
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(src);
+        }
+    }
+
+    public TypedInputStreamData getBinary(String id, int version)
+            throws Exception {
+        File f = new File(datastreamDirectory.getAbsolutePath() + "/" + datastreams.get(id), "version-" + version + ".data");
+        LOG.debug("fetching binary data from " + f.getAbsolutePath());
+        return new TypedInputStreamData(new FileInputStream(f), contentTypes
+                .get(id));
+    }
+
+    public static class TypedInputStreamData {
+
+        private final String contentType;
+
+        private final InputStream inputStream;
+
+        public TypedInputStreamData(final InputStream src,
+                final String contentType) {
+            this.contentType = contentType;
+            this.inputStream = src;
+        }
+
+        public String getContentType() {
+            return contentType;
+        }
+
+        public InputStream getInputStream() {
+            return inputStream;
         }
     }
 }
