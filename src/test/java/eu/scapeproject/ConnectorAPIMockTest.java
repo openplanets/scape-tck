@@ -25,7 +25,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -74,22 +73,22 @@ public class ConnectorAPIMockTest {
 
     public ElementContainer createDCElementContainer(){
         ElementContainer c = new ElementContainer();
-        
+
         SimpleLiteral title = new SimpleLiteral();
         title.getContent().add("A test entity");
         c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "title"), SimpleLiteral.class, title));
-        
+
         SimpleLiteral date = new SimpleLiteral();
         date.getContent().add(dateFormat.format(new Date()));
         c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "created"), SimpleLiteral.class, date));
-        
+
         SimpleLiteral lang = new SimpleLiteral();
         lang.getContent().add("en");
         c.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "created"), SimpleLiteral.class, lang));
-        
+
         return c;
     }
-    
+
     @Test
     public void testGetIntellectualEntityList() throws Exception {
         List<String> ids = new ArrayList<String>();
@@ -178,7 +177,7 @@ public class ConnectorAPIMockTest {
         ElementContainer getEc = (ElementContainer) fetched.getDescriptive();
         assertTrue("DC metadata does not match",
         postEc.getAny().get(0).getValue().getContent().equals(getEc.getAny().get(0).getValue().getContent()));
-		
+
         Representation postRep = entity.getRepresentations().get(0);
         Representation getRep = fetched.getRepresentations().get(0);
         assertTrue("Representation identifier does not match", postRep.getIdentifier().getValue().equals(getRep.getIdentifier().getValue()));
@@ -277,7 +276,7 @@ public class ConnectorAPIMockTest {
                 .identifier(new Identifier(UUID.randomUUID().toString()))
                 .build();
 
-        
+
         IntellectualEntity entity = ModelUtil
                 .createEntity(Arrays.asList(ModelUtil.createImageRepresentation(URI
                         .create(this.getClass().getClassLoader().getResource("scape_logo.png").toString()),
@@ -291,13 +290,11 @@ public class ConnectorAPIMockTest {
                 entity.getRepresentations().get(0).getFiles().get(0).getBitStreams().get(0).getIdentifier().getValue());
         resp = CLIENT.execute(get);
         assertTrue(resp.getStatusLine().getStatusCode() == 200);
-        BitStream fetched = ScapeMarshaller.newInstance().deserialize(BitStream.class, resp.getEntity().getContent());
+        BitStream fetched = (BitStream) ScapeMarshaller.newInstance().deserialize(resp.getEntity().getContent());
         get.releaseConnection();
-        BitStream orig = entity.getRepresentations().get(0).getFiles().get(0).getBitStreams().get(0); 
+        BitStream orig = entity.getRepresentations().get(0).getFiles().get(0).getBitStreams().get(0);
         assertEquals(orig.getIdentifier().getValue(), fetched.getIdentifier().getValue());
-        assertEquals(orig.getTitle(), fetched.getTitle());
         assertEquals(orig.getTechnical(), fetched.getTechnical());
-        assertEquals(orig.getType(), fetched.getType());
     }
 
     @Test
@@ -387,7 +384,7 @@ public class ConnectorAPIMockTest {
 //        assertEquals(rep, entity.getRepresentations().get(0));
         Representation getRep = entity.getRepresentations().get(0);
         assertTrue("Representation identifier does not match", rep.getIdentifier().getValue().equals(getRep.getIdentifier().getValue()));
-		
+
     }
 
     @Test
@@ -408,7 +405,7 @@ public class ConnectorAPIMockTest {
         IntellectualEntityCollection resultSet = (IntellectualEntityCollection) ScapeMarshaller.newInstance().deserialize(resp.getEntity().getContent());
         get.releaseConnection();
         //assertTrue(resultSet.getEntities().size() == 1);
-        DefaultConverter conv = new DefaultConverter();       
+        DefaultConverter conv = new DefaultConverter();
 
        //IntellectualEntity searched = conv.convertMets(resultSet.getEntities().get(0));
         MetsType mets = (MetsType) ScapeMarshaller.newInstance().deserialize(resp.getEntity().getContent());
@@ -436,7 +433,7 @@ public class ConnectorAPIMockTest {
         get.releaseConnection();
         assertTrue(resultSet.getEntities().size() == 1);
         DefaultConverter conv = new DefaultConverter();
-        
+
         //IntellectualEntity searched = conv.convertMets(resultSet.getEntities().get(0));
         MetsType mets = (MetsType) ScapeMarshaller.newInstance().deserialize(resp.getEntity().getContent());
         IntellectualEntity searched = conv.convertMets(mets);
@@ -514,8 +511,8 @@ public class ConnectorAPIMockTest {
         SimpleLiteral title = new SimpleLiteral();
         title.getContent().add("The Brand-New DC record");
         dcUpdated.getAny().add(new JAXBElement<SimpleLiteral>(new QName("http://purl.org/dc/elements/1.1/", "title"), SimpleLiteral.class, title));
-        
-        
+
+
         HttpPut put = UTIL.createPutMetadata(oldVersion.getIdentifier().getValue() + "-DESCRIPTIVE",dcUpdated);
         resp = CLIENT.execute(put);
         put.releaseConnection();
@@ -526,7 +523,7 @@ public class ConnectorAPIMockTest {
         resp = CLIENT.execute(get);
         IntellectualEntity newVersion = ScapeMarshaller.newInstance().deserialize(IntellectualEntity.class, resp.getEntity().getContent());
         get.releaseConnection();
-        
+
         ElementContainer newEc = (ElementContainer) newVersion.getDescriptive();
         assertTrue("DC metadata does not match",
         newEc.getAny().get(0).getValue().getContent().equals(dcUpdated.getAny().get(0).getValue().getContent()));
