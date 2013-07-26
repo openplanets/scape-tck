@@ -27,7 +27,6 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.purl.dc.elements._1.ElementContainer;
 import org.purl.dc.elements._1.SimpleLiteral;
@@ -313,7 +312,6 @@ public class ConnectorAPIMockTest {
         assertTrue(xml.length() > 10); // check for some content
         get.releaseConnection();
     }
-    @Ignore
     @Test
     public void testRetrieveIntellectualEntityWithRefs() throws Exception {
         IntellectualEntity ie = new IntellectualEntity.Builder()

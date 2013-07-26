@@ -1,3 +1,4 @@
+
 package eu.scapeproject;
 
 import java.io.ByteArrayInputStream;
@@ -35,39 +36,61 @@ import eu.scapeproject.model.LifecycleState;
 import eu.scapeproject.model.LifecycleState.State;
 import eu.scapeproject.model.Representation;
 import eu.scapeproject.model.VersionList;
-import eu.scapeproject.util.ONBConverter;
 import eu.scapeproject.util.ScapeMarshaller;
 import gov.loc.marc21.slim.RecordType;
 
 public class MockContainer implements Container {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MockContainer.class);
+    private static final Logger LOG = LoggerFactory
+            .getLogger(MockContainer.class);
 
     private final PosixStorage storage;
+
     private final LuceneIndex index;
+
     private final int asyncIngestDelay = 1000;
-    private final Map<String, Object> technicalMetadata = new HashMap<String, Object>();
-    private final Map<String, Object> sourceMetadata = new HashMap<String, Object>();
-    private final Map<String, Object> provenanceMetadata = new HashMap<String, Object>();
-    private final Map<String, Object> rightsMetadata = new HashMap<String, Object>();
-    private final Map<String, Object> descriptiveMetadata = new HashMap<String, Object>();
+
+    private final Map<String, Object> technicalMetadata =
+            new HashMap<String, Object>();
+
+    private final Map<String, Object> sourceMetadata =
+            new HashMap<String, Object>();
+
+    private final Map<String, Object> provenanceMetadata =
+            new HashMap<String, Object>();
+
+    private final Map<String, Object> rightsMetadata =
+            new HashMap<String, Object>();
+
+    private final Map<String, Object> descriptiveMetadata =
+            new HashMap<String, Object>();
+
     private final Map<String, String> fileIdMap = new HashMap<String, String>();
-    private final Map<String, String> bitstreamIdMap = new HashMap<String, String>();
-    private final Map<String, String> representationIdMap = new HashMap<String, String>();
-    private final Map<Long, Object> asyncIngestMap = new HashMap<Long, Object>();
+
+    private final Map<String, String> bitstreamIdMap =
+            new HashMap<String, String>();
+
+    private final Map<String, String> representationIdMap =
+            new HashMap<String, String>();
+
+    private final Map<Long, Object> asyncIngestMap =
+            new HashMap<Long, Object>();
+
     private final AsyncIngester asyncIngester = new AsyncIngester();
+
     private final int port;
+
     private final ScapeMarshaller marshaller;
 
     private Thread asyncIngesterThread = new Thread();
 
-    public MockContainer(String path, int port) throws JAXBException {
+    public MockContainer(String path, int port)
+            throws JAXBException {
         this.storage = new PosixStorage(path);
         this.index = new LuceneIndex();
         this.port = port;
         this.marshaller = ScapeMarshaller.newInstance();
 
-        
     }
 
     public void close() throws Exception {
@@ -113,6 +136,7 @@ public class MockContainer implements Container {
         }
     }
 
+    @Override
     public void handle(Request req, Response resp) {
         try {
             if (req.getMethod().equals("POST")) {
@@ -131,11 +155,14 @@ public class MockContainer implements Container {
         }
     }
 
-    private void handleAsyncIngest(Request req, Response resp, int okValue) throws Exception {
+    private void handleAsyncIngest(Request req, Response resp, int okValue)
+            throws Exception {
         // get entity from request body
-        IntellectualEntity.Builder entityBuilder = new IntellectualEntity.Builder(marshaller.deserialize(
-                IntellectualEntity.class, req.getInputStream()));
-        entityBuilder.lifecycleState(new LifecycleState("async ingest", State.INGESTING));
+        IntellectualEntity.Builder entityBuilder =
+                new IntellectualEntity.Builder(marshaller.deserialize(
+                        IntellectualEntity.class, req.getInputStream()));
+        entityBuilder.lifecycleState(new LifecycleState("async ingest",
+                State.INGESTING));
         IntellectualEntity entity = entityBuilder.build();
 
         // add the entity to the async map, for later ingestion,
@@ -148,7 +175,8 @@ public class MockContainer implements Container {
 
         // have to check for id existence and generate some if necessary
         if (entity.getIdentifier() == null) {
-            entityBuilder.identifier(new Identifier(UUID.randomUUID().toString()));
+            entityBuilder.identifier(new Identifier(UUID.randomUUID()
+                    .toString()));
         }
 
         // return the identity to get the lifecyclestate
@@ -173,7 +201,8 @@ public class MockContainer implements Container {
 
     private void handleGet(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
-        LOG.info("-- HTTP/1.1 GET " + contextPath + " from " + req.getClientAddress().getAddress().getHostAddress());
+        LOG.info("-- HTTP/1.1 GET " + contextPath + " from " +
+                req.getClientAddress().getAddress().getHostAddress());
         try {
             if (contextPath.startsWith("/entity/")) {
                 handleRetrieveEntity(req, resp);
@@ -203,17 +232,23 @@ public class MockContainer implements Container {
         }
     }
 
-    private void handleIngest(Request req, Response resp, int okValue) throws Exception {
+    private void handleIngest(Request req, Response resp, int okValue)
+            throws Exception {
         try {
-            IntellectualEntity ent = marshaller.deserialize(
-                    IntellectualEntity.class, req.getInputStream());
-            IntellectualEntity.Builder entityBuilder = new IntellectualEntity.Builder(ent);
-            entityBuilder.lifecycleState(new LifecycleState("", State.INGESTED));
+            IntellectualEntity ent =
+                    marshaller.deserialize(IntellectualEntity.class, req
+                            .getInputStream());
+            IntellectualEntity.Builder entityBuilder =
+                    new IntellectualEntity.Builder(ent);
+            entityBuilder
+                    .lifecycleState(new LifecycleState("", State.INGESTED));
             IntellectualEntity entity = entityBuilder.build();
 
             // have to check for id existence and generate some if necessary
-            if (entity.getIdentifier() == null || entity.getIdentifier().getValue() == null) {
-                entityBuilder.identifier(new Identifier(UUID.randomUUID().toString()));
+            if (entity.getIdentifier() == null ||
+                    entity.getIdentifier().getValue() == null) {
+                entityBuilder.identifier(new Identifier(UUID.randomUUID()
+                        .toString()));
                 entity = entityBuilder.build();
             }
 
@@ -223,7 +258,8 @@ public class MockContainer implements Container {
             // generate the server response with the ingested entity's id
             resp.setCode(okValue);
             resp.set("Content-Type", "text/plain");
-            IOUtils.copy(new ByteArrayInputStream(entity.getIdentifier().getValue().getBytes()), resp.getOutputStream());
+            IOUtils.copy(new ByteArrayInputStream(entity.getIdentifier()
+                    .getValue().getBytes()), resp.getOutputStream());
         } catch (IOException e) {
             resp.setCode(500);
             throw new SerializationException(e);
@@ -232,7 +268,8 @@ public class MockContainer implements Container {
 
     private void handlePost(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
-        LOG.info("-- HTTP/1.1 POST " + contextPath + " from " + req.getClientAddress().getAddress().getHostAddress());
+        LOG.info("-- HTTP/1.1 POST " + contextPath + " from " +
+                req.getClientAddress().getAddress().getHostAddress());
         try {
             if (contextPath.startsWith("/entity-async")) {
                 handleAsyncIngest(req, resp, 200);
@@ -252,7 +289,8 @@ public class MockContainer implements Container {
 
     private void handlePut(Request req, Response resp) throws IOException {
         String contextPath = req.getPath().getPath();
-        LOG.info("-- HTTP/1.1 PUT " + contextPath + " from " + req.getClientAddress().getAddress().getHostAddress());
+        LOG.info("-- HTTP/1.1 PUT " + contextPath + " from " +
+                req.getClientAddress().getAddress().getHostAddress());
         try {
             if (contextPath.startsWith("/entity/")) {
                 handleUpdateEntity(req, resp);
@@ -271,7 +309,8 @@ public class MockContainer implements Container {
 
     }
 
-    private void handleRepresentationSRU(Request req, Response resp) throws Exception {
+    private void handleRepresentationSRU(Request req, Response resp)
+            throws Exception {
         // String term = req.getParameter("query");
         // List<MetsDocument> entities = new ArrayList<MetsDocument>();
         // for (String id : index.searchRepresentation(term)) {
@@ -286,26 +325,42 @@ public class MockContainer implements Container {
         // resp.setCode(200);
     }
 
-    private void handleRetrieveBitStream(Request req, Response resp) throws Exception {
+    private void handleRetrieveBitStream(Request req, Response resp)
+            throws Exception {
         String bsId = req.getPath().getPath().substring(11);
         String entityId = bitstreamIdMap.get(bsId);
         if (entityId == null) {
             resp.setCode(404);
         } else {
-            byte[] blob = storage.getXML(entityId, getVersionFromPath(req.getPath().getPath()));
-            IntellectualEntity entity = marshaller.deserialize(IntellectualEntity.class,
-                    new ByteArrayInputStream(blob));
-            marshaller.serialize(getBitStream(bsId, entity), resp.getOutputStream());
+            byte[] blob =
+                    storage.getXML(entityId, getVersionFromPath(req.getPath()
+                            .getPath()));
+            IntellectualEntity entity =
+                    marshaller.deserialize(IntellectualEntity.class,
+                            new ByteArrayInputStream(blob));
+            marshaller.serialize(getBitStream(bsId, entity), resp
+                    .getOutputStream());
             resp.setCode(200);
         }
     }
 
-    private void handleRetrieveEntity(Request req, Response resp) throws Exception {
-        String id = req.getPath().getPath().substring(req.getPath().getPath().lastIndexOf('/') + 1);
-
+    private void handleRetrieveEntity(Request req, Response resp)
+            throws Exception {
+        String id =
+                req.getPath().getPath().substring(
+                        req.getPath().getPath().lastIndexOf('/') + 1);
         try {
-            byte[] blob = storage.getXML(id, getVersionFromPath(req.getPath().getPath()));
-            IOUtils.write(blob, resp.getOutputStream());
+            byte[] blob =
+                    storage.getXML(id, getVersionFromPath(req.getPath()
+                            .getPath()));
+            if (req.getQuery().containsKey("useReferences") && req.getQuery().get("useReferences").equalsIgnoreCase("yes")){
+                IntellectualEntity ent =
+                        this.marshaller.deserialize(IntellectualEntity.class,
+                                new ByteArrayInputStream(blob));
+                this.marshaller.serialize(ent, resp.getOutputStream(), true);
+            }else{
+                IOUtils.write(blob, resp.getOutputStream());
+            }
             resp.setCode(200);
             resp.close();
         } catch (FileNotFoundException e) {
@@ -315,7 +370,8 @@ public class MockContainer implements Container {
         }
     }
 
-    private void handleRetrieveEntityList(Request req, Response resp) throws Exception {
+    private void handleRetrieveEntityList(Request req, Response resp)
+            throws Exception {
         // String[] uris = req.getContent().split("\\n");
         // List<MetsDocument> docs = new ArrayList<MetsDocument>();
         // for (String uri : uris) {
@@ -331,34 +387,44 @@ public class MockContainer implements Container {
         // resp.setCode(200);
     }
 
-    private void handleRetrieveFile(Request req, Response resp) throws Exception {
+    private void handleRetrieveFile(Request req, Response resp)
+            throws Exception {
         String fileId = req.getPath().getPath().substring(6);
         String entityIdid = fileIdMap.get(fileId);
-        byte[] blob = storage.getXML(entityIdid, getVersionFromPath(req.getPath().getPath()));
+        byte[] blob =
+                storage.getXML(entityIdid, getVersionFromPath(req.getPath()
+                        .getPath()));
         if (entityIdid == null) {
             resp.setCode(404);
         } else {
-            IntellectualEntity entity = marshaller.deserialize(IntellectualEntity.class,
-                    new ByteArrayInputStream(blob));
-            marshaller.serialize(getFile(fileId, entity), resp.getOutputStream());
+            IntellectualEntity entity =
+                    marshaller.deserialize(IntellectualEntity.class,
+                            new ByteArrayInputStream(blob));
+            marshaller.serialize(getFile(fileId, entity), resp
+                    .getOutputStream());
             resp.setCode(200);
         }
     }
 
-    private void handleRetrieveLifecycleState(Request req, Response resp) throws Exception {
+    private void handleRetrieveLifecycleState(Request req, Response resp)
+            throws Exception {
         String id = req.getPath().getPath().substring(11);
         Integer version = getVersionFromPath(req.getPath().getPath());
         if (storage.exists(id, version)) {
-            IntellectualEntity entity = marshaller.deserialize(IntellectualEntity.class,
-                    new ByteArrayInputStream(storage.getXML(id, version)));
-            marshaller.serialize(entity.getLifecycleState(), resp.getOutputStream());
+            IntellectualEntity entity =
+                    marshaller.deserialize(IntellectualEntity.class,
+                            new ByteArrayInputStream(storage
+                                    .getXML(id, version)));
+            marshaller.serialize(entity.getLifecycleState(), resp
+                    .getOutputStream());
             return;
         }
         for (Entry<Long, Object> entry : asyncIngestMap.entrySet()) {
             if (entry.getValue() instanceof IntellectualEntity) {
                 IntellectualEntity ent = (IntellectualEntity) entry.getValue();
                 if (ent.getIdentifier().getValue().equals(id)) {
-                    marshaller.serialize(ent.getLifecycleState(), resp.getOutputStream());
+                    marshaller.serialize(ent.getLifecycleState(), resp
+                            .getOutputStream());
                     return;
                 }
             }
@@ -366,7 +432,8 @@ public class MockContainer implements Container {
 
     }
 
-    private void handleRetrieveMetadata(Request req, Response resp) throws Exception {
+    private void handleRetrieveMetadata(Request req, Response resp)
+            throws Exception {
         // String id =
         // req.getPath().getPath().substring(req.getPath().getPath().lastIndexOf('/')
         // + 1);
@@ -387,10 +454,15 @@ public class MockContainer implements Container {
         // }
     }
 
-    private void handleRetrieveRepresentation(Request req, Response resp) throws Exception {
-        String id = req.getPath().getPath().substring(req.getPath().getPath().lastIndexOf('/') + 1);
+    private void handleRetrieveRepresentation(Request req, Response resp)
+            throws Exception {
+        String id =
+                req.getPath().getPath().substring(
+                        req.getPath().getPath().lastIndexOf('/') + 1);
         try {
-            byte[] blob = storage.getXML(representationIdMap.get(id), getVersionFromPath(req.getPath().getPath()));
+            byte[] blob =
+                    storage.getXML(representationIdMap.get(id),
+                            getVersionFromPath(req.getPath().getPath()));
             IOUtils.write(blob, resp.getOutputStream());
             resp.setCode(200);
             resp.close();
@@ -401,16 +473,19 @@ public class MockContainer implements Container {
         }
     }
 
-    private void handleRetrieveVersionList(Request req, Response resp) throws Exception {
-         String id = req.getPath().getPath().substring(21);
-         List<String> versions = storage.getVersionList(id);
-         Collections.sort(versions);
-         VersionList versionList = new VersionList(id, versions);
-         marshaller.getJaxbMarshaller().marshal(versionList, resp.getOutputStream());
-         resp.setCode(200);
+    private void handleRetrieveVersionList(Request req, Response resp)
+            throws Exception {
+        String id = req.getPath().getPath().substring(21);
+        List<String> versions = storage.getVersionList(id);
+        Collections.sort(versions);
+        VersionList versionList = new VersionList(id, versions);
+        marshaller.getJaxbMarshaller().marshal(versionList,
+                resp.getOutputStream());
+        resp.setCode(200);
     }
 
-    private void handleUpdateEntity(Request req, Response resp) throws Exception {
+    private void handleUpdateEntity(Request req, Response resp)
+            throws Exception {
         try {
             handleIngest(req, resp, 200);
         } finally {
@@ -418,7 +493,8 @@ public class MockContainer implements Container {
         }
     }
 
-    private void handleUpdateMetadata(Request req, Response resp) throws Exception {
+    private void handleUpdateMetadata(Request req, Response resp)
+            throws Exception {
         // MetsMetadata data = marshaller.deserialize(MetsMetadata.class,
         // req.getInputStream());
         // String entityId = metadataIdMap.get(data.getId());
@@ -437,26 +513,41 @@ public class MockContainer implements Container {
         // storage.getNewVersionNumber(entityId), false);
     }
 
-    private void handleUpdateRepresentation(Request req, Response resp) throws Exception {
+    private void handleUpdateRepresentation(Request req, Response resp)
+            throws Exception {
         try {
-            Representation newRep = marshaller.deserialize(Representation.class, req.getInputStream());
-            byte[] blob = storage.getXML(representationIdMap.get(newRep.getIdentifier().getValue()));
-            IntellectualEntity ie = marshaller.deserialize(IntellectualEntity.class, new ByteArrayInputStream(blob));
-            List<Representation> newRepresentations = new ArrayList<Representation>(ie.getRepresentations().size());
+            Representation newRep =
+                    marshaller.deserialize(Representation.class, req
+                            .getInputStream());
+            byte[] blob =
+                    storage.getXML(representationIdMap.get(newRep
+                            .getIdentifier().getValue()));
+            IntellectualEntity ie =
+                    marshaller.deserialize(IntellectualEntity.class,
+                            new ByteArrayInputStream(blob));
+            List<Representation> newRepresentations =
+                    new ArrayList<Representation>(ie.getRepresentations()
+                            .size());
             for (Representation orig : ie.getRepresentations()) {
-                if (orig.getIdentifier().getValue().equals(newRep.getIdentifier().getValue())) {
+                if (orig.getIdentifier().getValue().equals(
+                        newRep.getIdentifier().getValue())) {
                     newRepresentations.add(newRep);
                 } else {
                     newRepresentations.add(orig);
                 }
             }
-            IntellectualEntity newVersion = new IntellectualEntity.Builder(ie)
-                    .representations(newRepresentations)
-                    .build();
+            IntellectualEntity newVersion =
+                    new IntellectualEntity.Builder(ie).representations(
+                            newRepresentations).build();
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             marshaller.serialize(newVersion, bos);
-            storage.saveXML(bos.toByteArray(), newVersion.getIdentifier().getValue(), storage.getNewVersionNumber(newVersion.getIdentifier().getValue()), false);
-            LOG.debug("updated representation " + newRep.getIdentifier().getValue() + " of intellectual entity " + newVersion.getIdentifier().getValue());
+            storage.saveXML(bos.toByteArray(), newVersion.getIdentifier()
+                    .getValue(), storage.getNewVersionNumber(newVersion
+                    .getIdentifier().getValue()), false);
+            LOG.debug("updated representation " +
+                    newRep.getIdentifier().getValue() +
+                    " of intellectual entity " +
+                    newVersion.getIdentifier().getValue());
             index.addRepresentation(newRep);
             resp.setCode(200);
         } catch (Exception e) {
@@ -465,47 +556,66 @@ public class MockContainer implements Container {
     }
 
     private void ingestEntity(IntellectualEntity entity) throws Exception {
-        IntellectualEntity.Builder entityBuilder = new IntellectualEntity.Builder(entity);
+        IntellectualEntity.Builder entityBuilder =
+                new IntellectualEntity.Builder(entity);
         if (entity.getDescriptive() != null) {
-            this.descriptiveMetadata.put(entity.getIdentifier().getValue(), entity.getDescriptive());
+            this.descriptiveMetadata.put(entity.getIdentifier().getValue(),
+                    entity.getDescriptive());
         }
         // add the lifecycle state
-        entityBuilder.lifecycleState(new LifecycleState("ingested", State.INGESTED));
+        entityBuilder.lifecycleState(new LifecycleState("ingested",
+                State.INGESTED));
 
         // save the identifiers to the according maps
         // and check that all objects have identifiers
         if (entity.getRepresentations() != null) {
-            List<Representation> representationsCopy = new ArrayList<Representation>();
+            List<Representation> representationsCopy =
+                    new ArrayList<Representation>();
             for (Representation r : entity.getRepresentations()) {
-                Representation.Builder repCopyBuilder = new Representation.Builder(r)
-                        .identifier((r.getIdentifier() == null) ? new Identifier(UUID.randomUUID().toString()) : r.getIdentifier());
+                Representation.Builder repCopyBuilder =
+                        new Representation.Builder(r).identifier((r
+                                .getIdentifier() == null) ? new Identifier(UUID
+                                .randomUUID().toString()) : r.getIdentifier());
                 if (r.getFiles() != null) {
                     repCopyBuilder.files(null);
                     List<File> fList = new ArrayList<File>();
                     for (File f : r.getFiles()) {
-                        File.Builder fileCopyBuilder = new File.Builder(f)
-                                .identifier((f.getIdentifier() == null) ? new Identifier(UUID.randomUUID().toString()) : f.getIdentifier());
+                        File.Builder fileCopyBuilder =
+                                new File.Builder(f).identifier((f
+                                        .getIdentifier() == null)
+                                        ? new Identifier(UUID.randomUUID()
+                                                .toString()) : f
+                                                .getIdentifier());
                         if (f.getBitStreams() != null) {
                             fileCopyBuilder.bitStreams(null);
                             List<BitStream> bsList = new ArrayList<BitStream>();
                             for (BitStream bs : f.getBitStreams()) {
-                                BitStream bsCopy = new BitStream.Builder(bs)
-                                        .identifier((bs.getIdentifier() == null) ? new Identifier(UUID.randomUUID().toString()) : bs.getIdentifier())
-                                        .build();
-                                bitstreamIdMap.put(bsCopy.getIdentifier().getValue(), entity.getIdentifier().getValue());
+                                BitStream bsCopy =
+                                        new BitStream.Builder(bs).identifier(
+                                                (bs.getIdentifier() == null)
+                                                        ? new Identifier(UUID
+                                                                .randomUUID()
+                                                                .toString())
+                                                        : bs.getIdentifier())
+                                                .build();
+                                bitstreamIdMap.put(bsCopy.getIdentifier()
+                                        .getValue(), entity.getIdentifier()
+                                        .getValue());
                                 bsList.add(bsCopy);
                                 fileCopyBuilder.bitStreams(bsList);
                             }
                         }
                         File fileCopy = fileCopyBuilder.build();
-                        fileIdMap.put(fileCopy.getIdentifier().getValue(), entity.getIdentifier().getValue());                        
+                        fileIdMap.put(fileCopy.getIdentifier().getValue(),
+                                entity.getIdentifier().getValue());
                         fList.add(fileCopy);
                         repCopyBuilder.files(fList);
                     }
                 }
                 Representation repCopy = repCopyBuilder.build();
                 representationsCopy.add(repCopy);
-                representationIdMap.put(repCopy.getIdentifier().getValue(), entity.getIdentifier().getValue());
+                representationIdMap.put(repCopy.getIdentifier().getValue(),
+                        entity.getIdentifier().getValue());
             }
             entityBuilder.representations(representationsCopy);
         }
@@ -517,13 +627,18 @@ public class MockContainer implements Container {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         marshaller.serialize(entity, bos);
         int version = entity.getVersionNumber();
-        if (storage.exists(entity.getIdentifier().getValue(), entity.getVersionNumber())) {
-            version = storage.getNewVersionNumber(entity.getIdentifier().getValue());
+        if (storage.exists(entity.getIdentifier().getValue(), entity
+                .getVersionNumber())) {
+            version =
+                    storage.getNewVersionNumber(entity.getIdentifier()
+                            .getValue());
         }
-        storage.saveXML(bos.toByteArray(), entity.getIdentifier().getValue(), version, false);
+        storage.saveXML(bos.toByteArray(), entity.getIdentifier().getValue(),
+                version, false);
 
         // update the hashmap with the metadata references to the entities
-        LOG.debug("++ adding descriptive metadata for entity " + entity.getIdentifier().getValue());
+        LOG.debug("++ adding descriptive metadata for entity " +
+                entity.getIdentifier().getValue());
     }
 
     private String extractId(Object descriptive) {
@@ -552,14 +667,18 @@ public class MockContainer implements Container {
     }
 
     public class AsyncIngester implements Runnable {
+
         private boolean stop = false;
 
+        @Override
         public void run() {
             while (!stop) {
-                for (Entry<Long, Object> asyncRequest : asyncIngestMap.entrySet()) {
+                for (Entry<Long, Object> asyncRequest : asyncIngestMap
+                        .entrySet()) {
                     if (new Date().getTime() >= asyncRequest.getKey()) {
                         try {
-                            LOG.info("ingesting object at " + asyncRequest.getKey());
+                            LOG.info("ingesting object at " +
+                                    asyncRequest.getKey());
                             ingestObject(asyncRequest.getValue());
                         } catch (Exception e) {
                             e.printStackTrace();
