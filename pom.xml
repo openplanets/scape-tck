@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>de.congrace</groupId>
+	<groupId>eu.scape-project</groupId>
 	<artifactId>scape-tck</artifactId>
 	<version>0.0.3-SNAPSHOT</version>
 	<name>scape-tck</name>
 	<description>TCK for applications using the various APIs of the SCAPE platform</description>
 	<dependencies>
 		<dependency>
-			<groupId>eu.scapeproject.model</groupId>
+			<groupId>eu.scape-project.model</groupId>
 			<artifactId>scape-platform-datamodel</artifactId>
 			<version>0.1.4-SNAPSHOT</version>
 		</dependency>

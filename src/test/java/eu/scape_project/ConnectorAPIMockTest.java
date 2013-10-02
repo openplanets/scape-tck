@@ -1,4 +1,4 @@
-package eu.scapeproject;
+package eu.scape_project;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -33,17 +33,17 @@ import org.purl.dc.elements._1.SimpleLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.scapeproject.model.BitStream;
-import eu.scapeproject.model.BitStream.Type;
-import eu.scapeproject.model.Identifier;
-import eu.scapeproject.model.IntellectualEntity;
-import eu.scapeproject.model.IntellectualEntityCollection;
-import eu.scapeproject.model.LifecycleState;
-import eu.scapeproject.model.LifecycleState.State;
-import eu.scapeproject.model.Representation;
-import eu.scapeproject.model.VersionList;
-import eu.scapeproject.util.DefaultConverter;
-import eu.scapeproject.util.ScapeMarshaller;
+import eu.scape_project.model.BitStream;
+import eu.scape_project.model.BitStream.Type;
+import eu.scape_project.model.Identifier;
+import eu.scape_project.model.IntellectualEntity;
+import eu.scape_project.model.IntellectualEntityCollection;
+import eu.scape_project.model.LifecycleState;
+import eu.scape_project.model.LifecycleState.State;
+import eu.scape_project.model.Representation;
+import eu.scape_project.model.VersionList;
+import eu.scape_project.util.DefaultConverter;
+import eu.scape_project.util.ScapeMarshaller;
 import gov.loc.mets.MetsType;
 
 public class ConnectorAPIMockTest {

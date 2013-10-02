@@ -1,4 +1,4 @@
-package eu.scapeproject;
+package eu.scape_project;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -14,11 +14,11 @@ import javax.xml.namespace.QName;
 import org.purl.dc.elements._1.ElementContainer;
 import org.purl.dc.elements._1.SimpleLiteral;
 
-import eu.scapeproject.model.BitStream;
-import eu.scapeproject.model.File;
-import eu.scapeproject.model.Identifier;
-import eu.scapeproject.model.IntellectualEntity;
-import eu.scapeproject.model.Representation;
+import eu.scape_project.model.BitStream;
+import eu.scape_project.model.File;
+import eu.scape_project.model.Identifier;
+import eu.scape_project.model.IntellectualEntity;
+import eu.scape_project.model.Representation;
 import gov.loc.mix.v20.BasicImageInformationType;
 import gov.loc.mix.v20.BasicImageInformationType.BasicImageCharacteristics;
 import gov.loc.mix.v20.Mix;

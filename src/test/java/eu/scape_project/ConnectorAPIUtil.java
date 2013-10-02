@@ -1,5 +1,5 @@
 
-package eu.scapeproject;
+package eu.scape_project;
 
 import java.io.ByteArrayOutputStream;
 
@@ -8,10 +8,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 
-import eu.scapeproject.model.File;
-import eu.scapeproject.model.IntellectualEntity;
-import eu.scapeproject.model.Representation;
-import eu.scapeproject.util.ScapeMarshaller;
+import eu.scape_project.model.File;
+import eu.scape_project.model.IntellectualEntity;
+import eu.scape_project.model.Representation;
+import eu.scape_project.util.ScapeMarshaller;
 
 public class ConnectorAPIUtil {
 

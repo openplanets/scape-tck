@@ -1,4 +1,4 @@
-package eu.scapeproject;
+package eu.scape_project;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,8 +26,8 @@ import org.purl.dc.elements._1.SimpleLiteral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.scapeproject.model.IntellectualEntity;
-import eu.scapeproject.model.Representation;
+import eu.scape_project.model.IntellectualEntity;
+import eu.scape_project.model.Representation;
 
 public class LuceneIndex {
     private final Directory entityDir = new RAMDirectory();

@@ -1,4 +1,4 @@
-package eu.scapeproject;
+package eu.scape_project;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
