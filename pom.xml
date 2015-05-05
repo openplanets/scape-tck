@@ -11,9 +11,9 @@
 	<name>scape-tck</name>
 	<description>TCK for applications using the various APIs of the SCAPE platform</description>
 	<scm>
-		<connection>scm:git:git@github.com:openplanets/scape-tck.git</connection>
-		<developerConnection>scm:git:git@github.com:openplanets/scape-tck.git</developerConnection>
-		<url>git@github.com:openplanets/scape-tck.git</url>
+		<connection>scm:git:git@github.com:openpreserve/scape-tck.git</connection>
+		<developerConnection>scm:git:git@github.com:openpreserve/scape-tck.git</developerConnection>
+		<url>git@github.com:openpreserve/scape-tck.git</url>
 	</scm>
 	<profiles>
 		<!-- We need the sonatype snapshot repo for now -->
@@ -42,7 +42,7 @@
 				<site>
 					<id>opf.jenkins.local.site</id>
 					<name>OPF Projects Website</name>
-					<url>file:///var/www/projects/scape/${project.name}</url>
+					<url>file:///var/www/projects.opf-labs.org/scape/${project.name}</url>
 				</site>
 			</distributionManagement>
 		</profile>
